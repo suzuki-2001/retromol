@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# RetroMol
 
-First, run the development server:
+Transform protein structures into pixel art
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+<br />
+
+[**▶ Live Demo**](https://retromol.vercel.app) ・ [MIT License](LICENSE) ・ [Images: CC0](https://creativecommons.org/publicdomain/zero/1.0/)
+
+<br />
+
+![RetroMol Gallery](./public/screenshot-gallery.png)
+
+![RetroMol Hero](./public/screenshot-hero.png)
+
+</div>
+
+<br />
+
+## Features
+
+Search by PDB ID or upload `.pdb`/`.cif` files. Choose from 20+ color palettes and 4 display styles. Export as transparent PNG or animated GIF. Share via URL. All generated images are CC0 public domain.
+
+## Rendering Pipeline
+
+```
+PDB Data → 3Dmol.js → Pixelation → Outline Detection → Canvas
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Load structure from RCSB PDB or user file
+2. Render with 3Dmol.js (cartoon/stick/sphere/surface)
+3. Apply gradient coloring from N-terminus to C-terminus
+4. Pixelate with dynamic resolution based on display size
+5. Detect edges and add dark outlines for retro feel
+6. Apply CRT scanlines and subtle glow effects
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## License
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Code: [MIT](LICENSE) / Generated Images: [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
