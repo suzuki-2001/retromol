@@ -539,9 +539,15 @@ const getPixelSize = (displaySize: number, residueCount?: number): number => {
     } else if (residueCount >= 200) {
       // Medium-large: slightly finer
       pixelSize = Math.max(3, Math.round(pixelSize * 0.85));
+    } else if (residueCount <= 40) {
+      // Very tiny proteins (Crambin etc): keep fine detail
+      pixelSize = Math.max(3, pixelSize - 1);
+    } else if (residueCount <= 60) {
+      // Small proteins (Insulin, BPTI etc): slightly finer
+      pixelSize = Math.min(pixelSize, 5);
     } else if (residueCount <= 100) {
-      // Small proteins: can be slightly chunkier
-      pixelSize = Math.min(pixelSize + 1, 6);
+      // Small-medium proteins: moderate
+      pixelSize = Math.min(pixelSize, 6);
     }
   }
 
@@ -811,7 +817,52 @@ export default function ProteinViewer({
             viewer.setStyle({}, { cartoon: { colorfunc } });
         }
 
+        // Step 1: Let 3Dmol center the molecule properly first
         viewer.zoomTo();
+        viewer.render();
+
+        // Step 2: Calculate bounding box for size normalization
+        const atoms = viewer.getModel().selectedAtoms({});
+        if (atoms && atoms.length > 0) {
+          let minX = Infinity, maxX = -Infinity;
+          let minY = Infinity, maxY = -Infinity;
+          let minZ = Infinity, maxZ = -Infinity;
+
+          atoms.forEach((atom: any) => {
+            if (atom.x !== undefined) {
+              minX = Math.min(minX, atom.x);
+              maxX = Math.max(maxX, atom.x);
+              minY = Math.min(minY, atom.y);
+              maxY = Math.max(maxY, atom.y);
+              minZ = Math.min(minZ, atom.z);
+              maxZ = Math.max(maxZ, atom.z);
+            }
+          });
+
+          // Calculate max dimension (protein size in Angstroms)
+          const sizeX = maxX - minX;
+          const sizeY = maxY - minY;
+          const sizeZ = maxZ - minZ;
+          const maxDimension = Math.max(sizeX, sizeY, sizeZ);
+
+          // Step 3: Get current view state after zoomTo
+          // Format: [pos.x, pos.y, pos.z, zoom, q.x, q.y, q.z, q.w]
+          const currentView = viewer.getView();
+
+          // Step 4: Calculate normalized zoom
+          // Target: all proteins should appear as if they're 60 Angstroms
+          // The 4th element (zoom) is camera distance - more negative = further away
+          const referenceSize = 60; // Target visual size
+          const zoomAdjustment = maxDimension / referenceSize;
+
+          // Adjust the zoom (4th element) - multiply to scale appropriately
+          const newView = [...currentView];
+          newView[3] = currentView[3] * zoomAdjustment;
+
+          // Step 5: Apply the normalized view
+          viewer.setView(newView);
+        }
+
         viewer.render();
 
         await new Promise(resolve => setTimeout(resolve, 100));

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { type PaletteKey, type DisplayStyle, type ExportFunctions, DISPLAY_STYLES } from './ProteinViewer';
 import PaletteSelector from './PaletteSelector';
@@ -83,7 +83,28 @@ export default function ProteinCard({ name, pdbId, description, residueCount, ca
   const [selectedPalette, setSelectedPalette] = useState<PaletteKey>(defaultPalette);
   const [displayStyle, setDisplayStyle] = useState<DisplayStyle>('cartoon');
   const [isExportingGif, setIsExportingGif] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const exportFnsRef = useRef<ExportFunctions | null>(null);
+
+  // Lazy loading with Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' } // Start loading 200px before entering viewport
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleExportReady = useCallback((exportFns: ExportFunctions) => {
     exportFnsRef.current = exportFns;
@@ -211,6 +232,7 @@ export default function ProteinCard({ name, pdbId, description, residueCount, ca
 
   return (
     <div
+      ref={cardRef}
       className="card card-gold-hover protein-card animate-fade-in group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -221,14 +243,20 @@ export default function ProteinCard({ name, pdbId, description, residueCount, ca
           id={`viewer-${pdbId}`}
           className="viewer-container"
         >
-          <ProteinViewer
-            pdbId={pdbId}
-            autoRotate={!isHovered}
-            palette={selectedPalette}
-            displayStyle={displayStyle}
-            residueCount={residueCount}
-            onExportReady={handleExportReady}
-          />
+          {isVisible ? (
+            <ProteinViewer
+              pdbId={pdbId}
+              autoRotate={!isHovered}
+              palette={selectedPalette}
+              displayStyle={displayStyle}
+              residueCount={residueCount}
+              onExportReady={handleExportReady}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[var(--bg-primary)]">
+              <div className="w-8 h-8 border-2 border-[var(--accent-primary)]/30 border-t-[var(--accent-primary)] rounded-full animate-spin" />
+            </div>
+          )}
         </div>
 
         {/* Top-left: Category badge */}
